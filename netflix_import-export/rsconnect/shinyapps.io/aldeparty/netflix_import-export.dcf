@@ -1,0 +1,12 @@
+name: netflix_import-export
+title: netflix_import-export
+username:
+account: aldeparty
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 2652482
+bundleId: 3490708
+url: https://aldeparty.shinyapps.io/netflix_import-export/
+when: 1596899705.89594
+asMultiple: FALSE
+asStatic: FALSE
