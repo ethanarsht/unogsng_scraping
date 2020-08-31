@@ -2,6 +2,8 @@ library(tidyverse)
 library(rnaturalearth)
 library(sf)
 library(leaflet)
+library(networkD3)
+library(ggalluvial)
 titles <- read_csv('all_details_26-5.csv', guess_max = 10000)
 
 df_titles <- titles %>%
@@ -47,6 +49,15 @@ df_combined <- df_titles %>% left_join(world, by = c('country_name' = 'admin')) 
   drop_na(coo_X, coo_Y, catalog_X, catalog_Y) %>%
   rename(catalog = country_name, coo = country)
 
+df_coo <- df_combined %>% filter(coo == 'Australia')
+
+ggplot(df_coo, aes(y = count, axis1 = coo, axis2 = catalog)) +
+  geom_alluvium(aes(fill = catalog), width = 1/100) + 
+  geom_stratum(width = 1/12, fill = 'black', color = 'grey') +
+  theme(
+    legend.position = 'None'
+  )
+
 shinyServer(function(input, output, session) {
   
   output$map <- renderLeaflet({
@@ -55,7 +66,7 @@ shinyServer(function(input, output, session) {
         addPolylines(map,
                      lat = ~c(coo_Y, catalog_Y),
                      lng = ~c(coo_X, catalog_X),
-                     weight =  ~n_count*60,
+                     weight =  ~n_count*10,
                      popup = paste0(
                        '<b>Country of origin: </b>', df_combined['coo'], '<br>',
                        '<b>Netflix catalog: </b>', df_combined['catalog']
@@ -87,7 +98,19 @@ shinyServer(function(input, output, session) {
                        weight = df_coo[[i, 'n_count']]*10
                      )
                    }
+                   
+                   #sankey output
+                   output$sankey <- renderSankeyNetwork({
+                     sankeyNetwork(
+                       Links = df_coo,
+                       Nodes = df_coo,
+                       Source = 'coo',
+                       Target = 'catalog',
+                       Value = 'count'
+                     )
+                   })
                  }
+
               )
     observeEvent({input$cat
                   input$coo
@@ -114,6 +137,11 @@ shinyServer(function(input, output, session) {
                          weight = df_cat[[i, 'n_count']]*10
                        )
                    }
+                   
+                   print(df_cat)
+                   
+                   #sankey output
+                   
                  })
     observeEvent({input$coo
                   input$cat},
@@ -137,6 +165,23 @@ shinyServer(function(input, output, session) {
                            weight = df_both[[i, 'n_count']]*10
                          )
                      }
+                   }
+                   
+                   #reset if both are empty
+                   if (input$coo == '' & input$cat == '') {
+                     output$map <- renderLeaflet({
+                       leaflet(df_combined) %>%
+                         addTiles() %>%
+                         addPolylines(map,
+                                      lat = ~c(coo_Y, catalog_Y),
+                                      lng = ~c(coo_X, catalog_X),
+                                      weight =  ~n_count*10,
+                                      popup = paste0(
+                                        '<b>Country of origin: </b>', df_combined['coo'], '<br>',
+                                        '<b>Netflix catalog: </b>', df_combined['catalog']
+                                      )
+                         )
+                     })
                    }
                  })
 })

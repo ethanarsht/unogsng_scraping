@@ -2,6 +2,7 @@ library(shiny)
 library(tidyverse)
 library(sf)
 library(leaflet)
+library(networkD3)
 
 titles <- read_csv('all_details_26-5.csv', guess_max = 10000)
 
@@ -39,7 +40,8 @@ shinyUI(
                   )
     ),
     mainPanel(
-      leafletOutput('map')
+      leafletOutput('map'),
+      sankeyNetworkOutput('sankey')
     )
   )
 )
